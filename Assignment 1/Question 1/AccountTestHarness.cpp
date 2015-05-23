@@ -109,7 +109,7 @@ public:                                         // PUBLIC interface of Account
 protected:
     void balanceIs( const int );                    // mutator - changes balance of the account
 private:
-    const AccountNo accountNo_;
+    AccountNo const accountNo_;
     int balance_;
 };
 
