@@ -51,6 +51,30 @@ ostream& operator<< ( ostream &sout, const BCode &b ) {
 
 
 //===================================================================
+// Building
+//===================================================================
+
+class Building {
+public:
+    Building ( const BCode &bCode, string name );
+    BCode bCode () const;
+    string name () const;
+private:
+    BCode const bCode_;
+    string const name_;
+};
+
+Building::Building(const BCode &bCode, string name) : bCode_(bCode), name_(name) { }
+
+BCode Building::bCode() const {
+    return bCode_;
+}
+
+string Building::name() const {
+    return name_;
+}
+
+//===================================================================
 // Graph (of Buildings and Connectors)-
 //===================================================================
 
