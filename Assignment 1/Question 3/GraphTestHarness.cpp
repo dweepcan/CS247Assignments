@@ -7,9 +7,25 @@
 using namespace std;
 
 
-//************************************************************************
-//* YOUR IMPLENTATION OF BCODE, BUILDING, COLLECTION HERE
-//************************************************************************
+//===================================================================
+// Node
+//===================================================================
+
+struct Node {
+    Building building;
+    Node *next;
+};
+
+
+//===================================================================
+// Edge
+//===================================================================
+
+struct Edge {
+    Node *from, *to;
+    Edge *next;
+};
+
 
 //===================================================================
 // BCode
@@ -74,6 +90,7 @@ string Building::name() const {
     return name_;
 }
 
+
 //===================================================================
 // Graph (of Buildings and Connectors)-
 //===================================================================
@@ -134,10 +151,10 @@ Op convertOp( string opStr ) {
 //******************************************************************
 
 int main( int argc, char *argv[] ) {
-    Collection buildings;
+//    Collection buildings;
     Graph map1, map2;
 
-    // initialize buildings and map1 with input file, if present
+    /*// initialize buildings and map1 with input file, if present
     if ( argc > 1 ) {
 
         ifstream source(argv[1]);
@@ -182,7 +199,7 @@ int main( int argc, char *argv[] ) {
             op = convertOp( type );
         }
     }
-
+*/
     cout << map1;
 
     Graph* map = &map1;  // input commands affect which ever graph that map points to (map1 or map2)
