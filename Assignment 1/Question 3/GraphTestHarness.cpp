@@ -204,7 +204,6 @@ Graph::Graph() : buildings_(NULL), connectors_(NULL) { }
 // TODO: Graph destructor
 Graph::~Graph() { }
 
-// TODO: Copy constructor
 Graph::Graph(const Graph &graph) {
     BuildingNode* curNode = graph.buildings_;
     while(curNode != NULL) {
@@ -402,7 +401,6 @@ ostream& operator<< ( ostream &sout, const Graph &g ) {
     return sout;
 }
 
-// TODO: Assignment operator
 Graph& Graph::operator=(const Graph &target) {
     if(this == &target)
         return *this;
