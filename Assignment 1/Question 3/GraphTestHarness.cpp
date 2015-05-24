@@ -19,6 +19,7 @@ private:
     string code_;
 };
 
+
 BCode::BCode ( string code ) : code_(code) { }
 
 string BCode::code() const {
@@ -60,6 +61,7 @@ private:
     string const name_;
 };
 
+
 Building::Building(const BCode &bCode, string name) : bCode_(bCode), name_(name) { }
 
 BCode Building::bCode() const {
@@ -69,6 +71,9 @@ BCode Building::bCode() const {
 string Building::name() const {
     return name_;
 }
+
+// comparison operator
+
 
 // streaming operator
 ostream& operator<<( ostream &sout, const Building &b ) {
@@ -102,22 +107,23 @@ private:
     BuildingNode* buildings_;
 };
 
+
 Collection::Collection() : buildings_(NULL) { }
+
+// TODO: Collection destructor
+Collection::~Collection() { }
 
 void Collection::insert(string code, string name) {
     BuildingNode* newBuilding = new BuildingNode;
     BCode bCode = BCode(code);
     newBuilding->building = new Building(bCode, name);
-    if(buildings_ == NULL) {
-        newBuilding->next = NULL;
-    } else {
-        newBuilding->next = buildings_;
-    }
+    newBuilding->next = buildings_;
+    buildings_ = newBuilding;
 }
 
 void Collection::remove(string code) {
     BuildingNode* curNode = buildings_;
-    if(curNode == NULL) {
+    if (curNode == NULL) {
         return;
     } else if (curNode->building->bCode().code() == code) {
         buildings_ = curNode->next;
@@ -126,7 +132,7 @@ void Collection::remove(string code) {
     } else {
         BuildingNode* curNode_next = curNode->next;
         while (curNode_next != NULL) {
-            if(curNode_next->building->bCode().code() == code) {
+            if (curNode_next->building->bCode().code() == code) {
                 curNode->next = curNode_next->next;
                 delete curNode_next->building;
                 delete curNode_next;
@@ -140,22 +146,24 @@ void Collection::remove(string code) {
 
 Building* Collection::findBuilding(string code) const {
     BuildingNode* curNode = buildings_;
-    while(buildings_ != NULL) {
-        if(curNode->building->bCode().code() == code) {
+    while (curNode != NULL) {
+        if (curNode->building->bCode().code() == code) {
             return curNode->building;
         }
+        curNode = curNode->next;
     }
     return NULL;
 }
 
 
 //===================================================================
-// Edge
+// BuidingConnector
 //===================================================================
 
-struct Edge {
+struct BuildingConnector {
     BuildingNode *from, *to;
-    Edge *next;
+    string connectorType;
+    BuildingConnector *next;
 };
 
 
@@ -178,11 +186,176 @@ public:
     friend ostream& operator<< ( ostream&, const Graph& );  // insertion operator (insert graph into output stream)
     Graph& operator= ( const Graph& );                      // assignment operator for graph objects
     bool operator== ( const Graph& ) const;                 // equality operator for graph objects
+private:
+    BuildingNode* findBuildingNode ( string ) const;
+    BuildingNode* buildings_;
+    BuildingConnector* connectors_;
 };
 
-//************************************************************************
-//* YOUR IMPLENTATION OF GRAPH HERE
-//************************************************************************
+
+Graph::Graph() : buildings_(NULL), connectors_(NULL) { }
+
+// TODO: Graph destructor
+Graph::~Graph() { }
+
+// TODO: Copy constructor
+Graph::Graph(const Graph &) { }
+
+void Graph::addNode(Building *building) {
+    BuildingNode* newBuilding = new BuildingNode;
+    newBuilding->building = building;
+
+    if (buildings_ == NULL || buildings_->building->bCode().code() >= building->bCode().code()) {
+        newBuilding->next = buildings_;
+        buildings_ = newBuilding;
+    } else {
+        BuildingNode* currNode = buildings_;
+        while (currNode->next != NULL) {
+            if(currNode->next->building->bCode().code() > building->bCode().code()) {
+                newBuilding->next = currNode->next;
+                break;
+            }
+            currNode = currNode->next;
+        }
+        currNode->next = newBuilding;
+    }
+}
+
+void Graph::removeNode(string code) {
+    BuildingNode* curNode = buildings_;
+    if (curNode == NULL) {
+        return;
+    } else if (curNode->building->bCode().code() == code) {
+        buildings_ = curNode->next;
+        delete curNode;
+    } else {
+        BuildingNode* curNode_next = curNode->next;
+        while (curNode_next != NULL) {
+            if (curNode_next->building->bCode().code() == code) {
+                curNode->next = curNode_next->next;
+                delete curNode_next;
+                return;
+            }
+            curNode = curNode->next;
+            curNode_next = curNode_next->next;
+        }
+    }
+
+    // TODO: remove adjacent nodes
+}
+
+Building* Graph::findBuilding(string code) const {
+    BuildingNode* curNode = buildings_;
+    while (curNode != NULL) {
+        if (curNode->building->bCode().code() == code) {
+            return curNode->building;
+        }
+        curNode = curNode->next;
+    }
+    return NULL;
+}
+
+BuildingNode* Graph::findBuildingNode (string code) const {
+    BuildingNode* curNode = buildings_;
+    while (curNode != NULL) {
+        if (curNode->building->bCode().code() == code) {
+            return curNode;
+        }
+        curNode = curNode->next;
+    }
+    return NULL;
+}
+
+void Graph::addEdge(string code1, string code2, string connectorType) {
+    BuildingConnector* newConnector = new BuildingConnector;
+    newConnector->from = findBuildingNode(code1);
+    newConnector->to = findBuildingNode(code2);
+    newConnector->connectorType = connectorType;
+    newConnector->next = connectors_;
+    connectors_ = newConnector;
+}
+
+void Graph::removeEdge(string code1, string code2) {
+    BuildingConnector* curConnector = connectors_;
+    if (curConnector == NULL) {
+        return;
+    } else if (curConnector->from->building->bCode().code() == code1 && curConnector->to->building->bCode().code() == code2) {
+        connectors_ = curConnector->next;
+        delete curConnector;
+    } else {
+        BuildingConnector* curConnector_next = curConnector->next;
+        while (curConnector_next != NULL) {
+            if ((curConnector_next->from->building->bCode().code() == code1 && curConnector_next->to->building->bCode().code() == code2) ||
+                    (curConnector_next->from->building->bCode().code() == code1 && curConnector_next->to->building->bCode().code() == code2)) {
+                curConnector->next = curConnector_next->next;
+                delete curConnector_next;
+                return;
+            }
+            curConnector = curConnector->next;
+            curConnector_next = curConnector_next->next;
+        }
+    }
+}
+
+// TODO: Print path
+void Graph::printPaths(string, string, const bool) const { }
+
+void Graph::deleteGraph() {
+    while(buildings_ != NULL) {
+        BuildingNode* curNode = buildings_;
+        buildings_ = buildings_->next;
+        delete curNode;
+    }
+    while(connectors_ != NULL) {
+        BuildingConnector* curConnector = connectors_;
+        connectors_ = connectors_->next;
+        delete curConnector;
+    }
+}
+
+// streaming operator
+ostream& operator<< ( ostream &sout, const Graph &g ) {
+    BuildingNode* curNode = g.buildings_;
+    while(curNode != NULL) {
+        sout << *(curNode->building);
+        BuildingConnector* curConnector = g.connectors_;
+        bool firstConnector = false;
+        while(curConnector != NULL) {
+            if (curConnector->from->building->bCode() == curNode->building->bCode()) {
+                if (!firstConnector) {
+                    sout << "\tConnects to: " << curConnector->to->building->bCode() << " (" <<
+                                                                                        curConnector->connectorType << ")";
+                } else {
+                    sout << ", " << curConnector->to->building->bCode() << " (" << curConnector->connectorType << ")";
+                }
+                firstConnector = true;
+            } else if (curConnector->to->building->bCode() == curNode->building->bCode()) {
+                if (!firstConnector) {
+                    sout << "\tConnects to: " << curConnector->from->building->bCode() << " (" <<
+                                                                                          curConnector->connectorType << ")";
+                } else {
+                    sout << ", " << curConnector->from->building->bCode() << " (" << curConnector->connectorType << ")";
+                }
+                firstConnector = true;
+            }
+            curConnector = curConnector->next;
+        }
+        if(firstConnector) {
+            sout << endl;
+        }
+        sout << endl;
+        curNode = curNode->next;
+    }
+
+    return sout;
+}
+
+// TODO: Assignment operator
+Graph& Graph::operator=(const Graph &graph) { return *this; }
+
+bool Graph::operator==(const Graph &) const {
+    return false;
+}
 
 
 //************************************************************************
