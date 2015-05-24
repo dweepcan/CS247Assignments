@@ -206,12 +206,14 @@ Graph::~Graph() { }
 
 Graph::Graph(const Graph &graph) {
     BuildingNode* curNode = graph.buildings_;
+    buildings_ = NULL;
     while(curNode != NULL) {
         addNode(curNode->building);
         curNode = curNode->next;
     }
 
     BuildingConnector* curConnector = graph.connectors_;
+    connectors_ = NULL;
     while(curConnector != NULL) {
         addEdge(curConnector->from->building->bCode().code(), curConnector->to->building->bCode().code(), curConnector->connectorType);
         curConnector = curConnector->next;
