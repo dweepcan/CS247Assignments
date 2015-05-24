@@ -1,5 +1,5 @@
 #include <iostream>
-#include <map>
+#include <fstream>
 #include <string>
 #include <stdlib.h>
 
@@ -8,59 +8,39 @@ using namespace std;
 
 
 //===================================================================
-// Node
-//===================================================================
-
-struct Node {
-    Building building;
-    Node *next;
-};
-
-
-//===================================================================
-// Edge
-//===================================================================
-
-struct Edge {
-    Node *from, *to;
-    Edge *next;
-};
-
-
-//===================================================================
 // BCode
 //===================================================================
 
 class BCode {
 public:
-    explicit BCode( string shorthandName );
-    string shorthandName () const;
+    explicit BCode( string );
+    string code () const;
 private:
-    string shorthandName_;
+    string code_;
 };
 
-BCode::BCode ( string shorthandName ) : shorthandName_(shorthandName) { }
+BCode::BCode ( string code ) : code_(code) { }
 
-string BCode::shorthandName() const {
-    return shorthandName_;
+string BCode::code() const {
+    return code_;
 }
 
 // equality operator
 bool operator== (const BCode &a, const BCode &b) {
-    return a.shorthandName() == b.shorthandName();
+    return a.code() == b.code();
 }
 
 // streaming operators
 istream& operator>> ( istream &sin, BCode &b ) {
-    string shorthandName;
-    sin >> shorthandName;
-    b = BCode(shorthandName);
+    string code;
+    sin >> code;
+    b = BCode(code);
 
     return sin;
 }
 
 ostream& operator<< ( ostream &sout, const BCode &b ) {
-    sout << b.shorthandName();
+    sout << b.code();
 
     return sout;
 }
@@ -72,7 +52,7 @@ ostream& operator<< ( ostream &sout, const BCode &b ) {
 
 class Building {
 public:
-    Building ( const BCode &bCode, string name );
+    Building ( const BCode&, string );
     BCode bCode () const;
     string name () const;
 private:
@@ -89,6 +69,94 @@ BCode Building::bCode() const {
 string Building::name() const {
     return name_;
 }
+
+// streaming operator
+ostream& operator<<( ostream &sout, const Building &b ) {
+    sout << b.bCode() << "\t" << b.name() << endl;
+
+    return sout;
+}
+
+//===================================================================
+// Node
+//===================================================================
+
+struct BuildingNode {
+    Building* building;
+    BuildingNode *next;
+};
+
+
+//===================================================================
+// Collection
+//===================================================================
+
+class Collection {
+public:
+    Collection();
+    ~Collection();
+    void insert( string , string );
+    void remove( string );
+    Building* findBuilding( string ) const;
+private:
+    BuildingNode* buildings_;
+};
+
+Collection::Collection() : buildings_(NULL) { }
+
+void Collection::insert(string code, string name) {
+    BuildingNode* newBuilding = new BuildingNode;
+    BCode bCode = BCode(code);
+    newBuilding->building = new Building(bCode, name);
+    if(buildings_ == NULL) {
+        newBuilding->next = NULL;
+    } else {
+        newBuilding->next = buildings_;
+    }
+}
+
+void Collection::remove(string code) {
+    BuildingNode* curNode = buildings_;
+    if(curNode == NULL) {
+        return;
+    } else if (curNode->building->bCode().code() == code) {
+        buildings_ = curNode->next;
+        delete curNode->building;
+        delete curNode;
+    } else {
+        BuildingNode* curNode_next = curNode->next;
+        while (curNode_next != NULL) {
+            if(curNode_next->building->bCode().code() == code) {
+                curNode->next = curNode_next->next;
+                delete curNode_next->building;
+                delete curNode_next;
+                return;
+            }
+            curNode = curNode->next;
+            curNode_next = curNode_next->next;
+        }
+    }
+}
+
+Building* Collection::findBuilding(string code) const {
+    BuildingNode* curNode = buildings_;
+    while(buildings_ != NULL) {
+        if(curNode->building->bCode().code() == code) {
+            return curNode->building;
+        }
+    }
+    return NULL;
+}
+
+
+//===================================================================
+// Edge
+//===================================================================
+
+struct Edge {
+    BuildingNode *from, *to;
+    Edge *next;
+};
 
 
 //===================================================================
@@ -151,10 +219,10 @@ Op convertOp( string opStr ) {
 //******************************************************************
 
 int main( int argc, char *argv[] ) {
-//    Collection buildings;
+    Collection buildings;
     Graph map1, map2;
 
-    /*// initialize buildings and map1 with input file, if present
+    // initialize buildings and map1 with input file, if present
     if ( argc > 1 ) {
 
         ifstream source(argv[1]);
@@ -199,7 +267,6 @@ int main( int argc, char *argv[] ) {
             op = convertOp( type );
         }
     }
-*/
     cout << map1;
 
     Graph* map = &map1;  // input commands affect which ever graph that map points to (map1 or map2)
