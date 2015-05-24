@@ -1,15 +1,15 @@
 BCode
-a) The ADT is a value-based ADT since it represents the building code value of the Building ADT. Also, two building code objects with the same shorthand names are considered to be indentical.
+a) The ADT is a value-based ADT since it represents the building code value of the Building ADT. Also, two building code objects with the same shorthand names are considered to be identical.
 b) Since the ADT is a value-based ADT, equality and other comparison operators are important, the copy constructor, and assignment are allowed, and it should implement a deep copy of building shorthand name.
 c) For each of the C++ special member functions:
 	1) Default Constructor - Since the ADT has a private data member we should implement a constructor to initialize its value.
 	2) Destructor - Since the ADT does not have any pointer members, we can use the compiler generated version.
 	3) Copy Constructor - Since the ADT does not have any pointer members, we can use the compiler generated version.
 	4) Assignment - Since the ADT does not have any pointer members, we can use the compiler generated version.
-	5) Equality Operator - Since the compiler does not genereate a default version of the equality operator, we should implement it on our own.
+	5) Equality Operator - Since the compiler does not generate a default version of the equality operator, we should implement it on our own.
 
 Building
-a) The ADT is an entity-based ADT since it represents a real-world physical object, a building on campus. Also, two building objects with the same buiding code and official name are not considered to be indentical. Each object has a distinct identity.
+a) The ADT is an entity-based ADT since it represents a real-world physical object, a building on campus. Also, two building objects with the same building code and official name are not considered to be identical. Each object has a distinct identity.
 b) Since the ADT is an entity-based ADT, the copy constructor, assignment, and type conversions should be prohibited, equality and other comparison operators should be avoided.
 c) For each of the C++ special member functions:
 	1) Default Constructor - Since the ADT has private data members we should implement a constructor to initialize its value.
@@ -19,7 +19,7 @@ c) For each of the C++ special member functions:
 	5) Equality Operator - Since this is an entity-based ADT, we should not implement this special member function.
 
 Collection
-a) The ADT is a entity-based ADT since it represents a set of real-world physical objects, a collection of building on campus. Also, two collection objects with the same set of buildings are not considered to be indentical.
+a) The ADT is a entity-based ADT since it represents a set of real-world physical objects, a collection of building on campus. Also, two collection objects with the same set of buildings are not considered to be identical.
 b) Since the ADT is an entity-based ADT, the copy constructor, assignment, and type conversions should be prohibited, equality and other comparison operators should be avoided.
 c) For each of the C++ special member functions:
 	1) Default Constructor - Since the ADT has a private data member we should implement a constructor to initialize its value.
