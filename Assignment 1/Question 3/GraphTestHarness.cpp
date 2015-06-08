@@ -28,22 +28,6 @@ string BCode::code() const {
 }
 
 
-// streaming operators
-istream& operator>> ( istream &sin, BCode &b ) {
-    string code;
-    sin >> code;
-    b = BCode(code);
-
-    return sin;
-}
-
-ostream& operator<< ( ostream &sout, const BCode &b ) {
-    sout << b.code();
-
-    return sout;
-}
-
-
 //===================================================================
 // Building
 //===================================================================
@@ -79,9 +63,19 @@ string Building::name() const {
 }
 
 
+// comparison operators
+bool operator< (const Building &a, const Building &b) {
+    return a.code() < b.code();
+}
+
+bool operator>= (const Building &a, const Building &b) {
+    return !(a < b);
+}
+
+
 // streaming operator
 ostream& operator<<( ostream &sout, const Building &b ) {
-    sout << b.bCode() << "\t" << b.name() << endl;
+    sout << b.code() << "\t" << b.name() << endl;
 
     return sout;
 }
@@ -93,7 +87,7 @@ ostream& operator<<( ostream &sout, const Building &b ) {
 
 class BuildingNode {
 public:
-    BuildingNode( Building *building = NULL, BuildingNode *next = NULL );   // constructor
+    BuildingNode( Building*, BuildingNode *next = NULL );   // constructor
     ~BuildingNode();                                                        // destructor
     Building* building () const;                                            // accessor - building value of the building node
     BuildingNode* next () const;                                            // accessor - returns next building node
@@ -137,8 +131,6 @@ public:
     void insert( string , string );             // mutator - add building to collection
     void remove( string );                      // mutator - remove building from collection
     Building* findBuilding( string ) const;     // accessor - find building in collection
-    // TODO: remove debugging function
-    void print() const;
 private:
     BuildingNode* buildings_;
 };
@@ -201,15 +193,6 @@ Building* Collection::findBuilding(string code) const {
     return NULL;
 }
 
-// TODO: remove debugging function
-void Collection::print() const {
-    BuildingNode *curNode = buildings_;
-    while(curNode) {
-        cout << *(curNode->building()) << endl;
-        curNode = curNode->next();
-    }
-}
-
 
 //===================================================================
 // BuildingEdge
@@ -217,13 +200,28 @@ void Collection::print() const {
 
 class BuildingEdge {
 public:
-    BuildingEdge();
-
+    BuildingEdge( BuildingNode*, BuildingNode*, string, BuildingEdge *next = NULL );  // constructor
+    BuildingEdge* next () const;                                            // accessor - returns next building edge
+    void nextIs( BuildingEdge* );                                           // mutator - update the next building edge
 private:
-    BuildingNode* node1_, node2_;
+    BuildingNode *node1_, *node2_;
     string connector_;
     BuildingEdge* next_;
 };
+
+
+// constructor -- constructs a new building edge with two building nodes, connector type, and an optional next building edge
+BuildingEdge::BuildingEdge(BuildingNode *node1, BuildingNode *node2, string connector, BuildingEdge *next) : node1_(node1), node2_(node2), connector_(connector), next_(next) { }
+
+// accessor - returns next building edge value of object
+BuildingEdge *BuildingEdge::next() const {
+    return next_;
+}
+
+// mutator - updates the next building edge value of object
+void BuildingEdge::nextIs(BuildingEdge *next) {
+    next_ = next;
+}
 
 
 //===================================================================
@@ -245,12 +243,85 @@ public:
     friend ostream& operator<< ( ostream&, const Graph& );  // insertion operator (insert graph into output stream)
     Graph& operator= ( const Graph& );                      // assignment operator for graph objects
     bool operator== ( const Graph& ) const;                 // equality operator for graph objects
+
+    // TODO: remove only for debugging purposes
+    void printNode() const;
+private:
+    BuildingNode* nodes_;
+    BuildingEdge* edges_;
 };
 
 
 // constructor -- constructs a new empty graph
-Graph::Graph() {
+Graph::Graph() : nodes_(NULL), edges_(NULL) { }
 
+// destructor -- destructs building nodes and edges in the graph
+Graph::~Graph() {
+    deleteGraph();
+}
+
+// mutator - adds building node to the building nodes value of object
+void Graph::addNode(Building *building) {
+    BuildingNode *newNode = new BuildingNode(building);
+
+    if(nodes_ == NULL || *(nodes_->building()) >= *building) {
+        newNode->nextIs(nodes_);
+        nodes_ = newNode;
+    } else {
+        BuildingNode *curNode = nodes_;
+        while(curNode->next() && *(curNode->next()->building()) < *building) {
+            curNode = curNode->next();
+        }
+        newNode->nextIs(curNode->next());
+        curNode->nextIs(newNode);
+    }
+}
+
+// mutator - removes building node from the building nodes value of object
+void Graph::removeNode(string code) {
+    BuildingNode *curNode = nodes_;
+    // If there are no building nodes then do nothing
+    if(curNode == NULL) {
+        return;
+    }
+    // If the root building node has the building code then delete the root node
+    else if (curNode->building()->code() == code) {
+        nodes_ = curNode->next();
+        // TODO: remove adjacent nodes
+    }
+    // Otherwise check other building nodes and delete the building node with the building code
+    else {
+        while(curNode->next()) {
+            if(curNode->next()->building()->code() == code) {
+                curNode->nextIs(curNode->next()->next());
+                // TODO: remove adjacent nodes
+                break;
+            }
+            curNode = curNode->next();
+        }
+    }
+}
+
+// deletes building nodes and edges values of object
+void Graph::deleteGraph() {
+    while(edges_) {
+        BuildingEdge *tempEdge = edges_;
+        edges_ = edges_->next();
+        delete tempEdge;
+    }
+    while(nodes_) {
+        nodes_ = nodes_->next();
+    }
+}
+
+// TODO: remove only for debugging purposes
+void Graph::printNode() const {
+    BuildingNode *curNode = nodes_;
+    while(curNode){
+        cout << *(curNode->building());
+        curNode = curNode->next();
+    }
+    cout << endl;
 }
 
 
@@ -289,37 +360,37 @@ Op convertOp( string opStr ) {
 
 int main( int argc, char *argv[] ) {
     Collection buildings;
-//    Graph map1, map2;
-//
-//    // initialize buildings and map1 with input file, if present
-//    if ( argc > 1 ) {
-//
-//        ifstream source(argv[1]);
-//        if ( source.fail() ) {
-//            cerr << "Error: Could not open file \"" << argv[1] << "\"." << endl;
-//            return 1;
-//        }
-//
-//        // create a collection of buildings, and a map of buildings and interior links
-//
-//        string type;
-//        source >> type;
-//        Op op = convertOp ( type );
-//        while ( !source.eof() ) {
-//            switch (op) {
-//
-//                // add a new building to the collection of Buildings, and add the building to map1
-//                case building : {
-//                    string code;
-//                    string name;
-//                    string name2;
-//                    source >> code >> name;
-//                    getline( source, name2 );
-//                    buildings.insert( code, name+name2 );
-//                    map1.addNode( buildings.findBuilding ( code ) );
-//                    break;
-//                }
-//
+    Graph map1, map2;
+
+    // initialize buildings and map1 with input file, if present
+    if ( argc > 1 ) {
+
+        ifstream source(argv[1]);
+        if ( source.fail() ) {
+            cerr << "Error: Could not open file \"" << argv[1] << "\"." << endl;
+            return 1;
+        }
+
+        // create a collection of buildings, and a map of buildings and interior links
+
+        string type;
+        source >> type;
+        Op op = convertOp ( type );
+        while ( !source.eof() ) {
+            switch (op) {
+
+                // add a new building to the collection of Buildings, and add the building to map1
+                case building : {
+                    string code;
+                    string name;
+                    string name2;
+                    source >> code >> name;
+                    getline( source, name2 );
+                    buildings.insert( code, name+name2 );
+                    map1.addNode( buildings.findBuilding ( code ) );
+                    break;
+                }
+
 //                    // add a new link between two existing nodes in map1
 //                case edge: {
 //                    string code1, code2, type;
@@ -329,17 +400,17 @@ int main( int argc, char *argv[] ) {
 //                    getline ( source, junk );
 //                    break;
 //                }
-//
-//                default: { }
-//            }
-//            source >> type;
-//            op = convertOp( type );
-//        }
-//    }
-//
+
+                default: { }
+            }
+            source >> type;
+            op = convertOp( type );
+        }
+    }
+
 //    cout << map1;
-//
-//    Graph* map = &map1;  // input commands affect which ever graph that map points to (map1 or map2)
+
+    Graph* map = &map1;  // input commands affect which ever graph that map points to (map1 or map2)
 
     cout << "Test harness for Graph ADT:" << endl << endl;
 
@@ -353,14 +424,14 @@ int main( int argc, char *argv[] ) {
     while ( !cin.eof() ) {
         switch (op) {
 
-//            // set variable map to point to new graph (map1 or map2)
-//            case mapPtr: {
-//                string mapNo;
-//                cin >> mapNo;
-//                map = ( mapNo[0] == '1' ) ? &map1 : &map2;
-//                break;
-//            }
-//
+            // set variable map to point to new graph (map1 or map2)
+            case mapPtr: {
+                string mapNo;
+                cin >> mapNo;
+                map = ( mapNo[0] == '1' ) ? &map1 : &map2;
+                break;
+            }
+
 //                // print the current map to the console
 //            case print: {
 //                cout << *map;
@@ -382,10 +453,10 @@ int main( int argc, char *argv[] ) {
             case node: {
                 string code;
                 cin >> code;
-//                map->addNode( buildings.findBuilding( code ) );
+                map->addNode( buildings.findBuilding( code ) );
 
                 // TODO: remove only for debugging purposes
-                cout << *(buildings.findBuilding(code)) << endl;
+                map->printNode();
 
                 string junk;
                 getline( cin, junk );
@@ -417,14 +488,18 @@ int main( int argc, char *argv[] ) {
 //                getline ( cin, junk );
 //                break;
 //            }
-//
-//
-//                // delete the entire graph (no memory leak).  There is no change to the collection of Buildings.
-//            case delGraph: {
-//                map->deleteGraph();
-//                break;
-//            }
-//
+
+
+                // delete the entire graph (no memory leak).  There is no change to the collection of Buildings.
+            case delGraph: {
+                map->deleteGraph();
+
+                // TODO: remove only for debugging purposes
+                map->printNode();
+
+                break;
+            }
+
 //                // remove an existing edge from the current map
 //            case remEdge: {
 //                string code1, code2;
@@ -434,24 +509,33 @@ int main( int argc, char *argv[] ) {
 //                getline ( cin, junk );
 //                break;
 //            }
-//
-//                // remove an existing node from the current map.  There is no change to the collection of Buildings.
-//            case remNode: {
-//                string code;
-//                cin >> code;
-//                map->removeNode( code );
-//                string junk;
-//                getline( cin, junk );
-//                break;
-//            }
+
+                // remove an existing node from the current map.  There is no change to the collection of Buildings.
+            case remNode: {
+                string code;
+                cin >> code;
+                map->removeNode( code );
+
+                // TODO: remove only for debugging purposes
+                map->printNode();
+
+                string junk;
+                getline( cin, junk );
+                break;
+            }
 
                 // remove an existing building from the collection of buildings.  The building also needs to be removed from the two maps, as well as all links involving the building
             case wreckage: {
                 string code;
                 cin >> code;
-//                map1.removeNode( code );
-//                map2.removeNode( code );
+                map1.removeNode( code );
+                map2.removeNode( code );
                 buildings.remove ( code );
+
+                // TODO: remove only for debugging purposes
+                map1.printNode();
+                map2.printNode();
+
                 string junk;
                 getline ( cin, junk );
                 break;
@@ -500,8 +584,6 @@ int main( int argc, char *argv[] ) {
                 cerr << "Invalid command." << endl;
             }
         }
-
-        buildings.print();
 
         cout << "Command: ";
         cin >> command;
