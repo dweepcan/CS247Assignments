@@ -88,7 +88,6 @@ ostream& operator<<( ostream &sout, const Building &b ) {
 class BuildingNode {
 public:
     BuildingNode( Building*, BuildingNode *next = NULL );   // constructor
-    ~BuildingNode();                                                        // destructor
     Building* building () const;                                            // accessor - building value of the building node
     BuildingNode* next () const;                                            // accessor - returns next building node
     void nextIs( BuildingNode* );                                           // mutator - update the next building node
@@ -100,9 +99,6 @@ private:
 
 // constructor -- constructs a new building node with an optional building and next building node
 BuildingNode::BuildingNode(Building *building, BuildingNode *next) : building_(building), next_(next) { }
-
-// destructor -- destructs the building node and the building
-BuildingNode::~BuildingNode() { delete building_; }
 
 // accessor - returns building value of object
 Building* BuildingNode::building() const {
@@ -144,6 +140,7 @@ Collection::~Collection() {
     while(buildings_) {
         BuildingNode *tempNode = buildings_;
         buildings_ = buildings_->next();
+        delete tempNode->building();
         delete tempNode;
     }
 }
@@ -165,6 +162,7 @@ void Collection::remove(string code) {
     // If the root building node has the building code then delete the root node
     else if (curNode->building()->code() == code) {
         buildings_ = curNode->next();
+        delete curNode->building();
         delete curNode;
     }
     // Otherwise check other building nodes and delete the building node with the building code
@@ -173,6 +171,7 @@ void Collection::remove(string code) {
             if(curNode->next()->building()->code() == code) {
                 BuildingNode *tempNode = curNode->next();
                 curNode->nextIs(tempNode->next());
+                delete tempNode->building();
                 delete tempNode;
                 return;
             }
@@ -288,13 +287,16 @@ void Graph::removeNode(string code) {
     else if (curNode->building()->code() == code) {
         nodes_ = curNode->next();
         // TODO: remove adjacent nodes
+        delete curNode;
     }
     // Otherwise check other building nodes and delete the building node with the building code
     else {
         while(curNode->next()) {
             if(curNode->next()->building()->code() == code) {
+                BuildingNode *tempNode = curNode->next();
                 curNode->nextIs(curNode->next()->next());
                 // TODO: remove adjacent nodes
+                delete tempNode;
                 break;
             }
             curNode = curNode->next();
@@ -310,7 +312,9 @@ void Graph::deleteGraph() {
         delete tempEdge;
     }
     while(nodes_) {
+        BuildingNode *tempNode = nodes_;
         nodes_ = nodes_->next();
+        delete tempNode;
     }
 }
 
