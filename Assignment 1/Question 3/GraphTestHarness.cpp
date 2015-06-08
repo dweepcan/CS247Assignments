@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <string>
-#include <stdlib.h>
+
 
 using namespace std;
 
@@ -88,9 +87,9 @@ ostream& operator<<( ostream &sout, const Building &b ) {
 class BuildingNode {
 public:
     BuildingNode( Building*, BuildingNode *next = NULL );   // constructor
-    Building* building () const;                                            // accessor - building value of the building node
-    BuildingNode* next () const;                                            // accessor - returns next building node
-    void nextIs( BuildingNode* );                                           // mutator - update the next building node
+    Building* building () const;                            // accessor - building value of the building node
+    BuildingNode* next () const;                            // accessor - returns next building node
+    void nextIs( BuildingNode* );                           // mutator - update the next building node
 private:
     Building* building_;
     BuildingNode* next_;
@@ -199,9 +198,9 @@ Building* Collection::findBuilding(string code) const {
 
 class BuildingEdge {
 public:
-    BuildingEdge( BuildingNode*, BuildingNode*, string, BuildingEdge *next = NULL );  // constructor
-    BuildingEdge* next () const;                                            // accessor - returns next building edge
-    void nextIs( BuildingEdge* );                                           // mutator - update the next building edge
+    BuildingEdge( BuildingNode*, BuildingNode*, string, BuildingEdge *next = NULL );// constructor
+    BuildingEdge* next () const;                                                    // accessor - returns next building edge
+    void nextIs( BuildingEdge* );                                                   // mutator - update the next building edge
 private:
     BuildingNode *node1_, *node2_;
     string connector_;
@@ -246,6 +245,8 @@ public:
     // TODO: remove only for debugging purposes
     void printNode() const;
 private:
+    BuildingNode* findBuildingNode ( string ) const;        // accessor - finds building node in graph
+
     BuildingNode* nodes_;
     BuildingEdge* edges_;
 };
@@ -304,6 +305,20 @@ void Graph::removeNode(string code) {
     }
 }
 
+// accessor - returns building, with the building code, of a building node in the graph
+Building* Graph::findBuilding(string code) const {
+    BuildingNode *node = findBuildingNode(code);
+    if(node) {
+        return node->building();
+    }
+    return NULL;
+}
+
+// mutator - adds building edge to the building edges value of object
+//void Graph::addEdge(string code1, string code2, string connector) {
+//    BuildingEdge *newEdge = new BuildingEdge();
+//}
+
 // deletes building nodes and edges values of object
 void Graph::deleteGraph() {
     while(edges_) {
@@ -326,6 +341,18 @@ void Graph::printNode() const {
         curNode = curNode->next();
     }
     cout << endl;
+}
+
+// accessor - returns building node with the building code in the graph
+BuildingNode* Graph::findBuildingNode(string code) const {
+    BuildingNode *curNode = nodes_;
+    while(curNode) {
+        if(curNode->building()->code() == code) {
+            return curNode;
+        }
+        curNode = curNode->next();
+    }
+    return NULL;
 }
 
 
@@ -466,23 +493,23 @@ int main( int argc, char *argv[] ) {
                 getline( cin, junk );
                 break;
             }
-//
-//                // find a building in the current map
-//            case findB: {
-//                string code;
-//                cin >> code;
-//                Building *b = map->findBuilding ( code );
-//                if ( b ) {
-//                    cout << *b << endl;
-//                }
-//                else {
-//                    cout << "Couldn't find building " << code << endl;
-//                }
-//                string junk;
-//                getline( cin, junk );
-//                break;
-//            }
-//
+
+                // find a building in the current map
+            case findB: {
+                string code;
+                cin >> code;
+                Building *b = map->findBuilding ( code );
+                if ( b ) {
+                    cout << *b << endl;
+                }
+                else {
+                    cout << "Couldn't find building " << code << endl;
+                }
+                string junk;
+                getline( cin, junk );
+                break;
+            }
+
 //                // add a new link between existing graph nodes in the current map
 //            case edge: {
 //                string code1, code2, type;
