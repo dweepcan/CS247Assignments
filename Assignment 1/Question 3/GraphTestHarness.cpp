@@ -199,8 +199,11 @@ Building* Collection::findBuilding(string code) const {
 class BuildingEdge {
 public:
     BuildingEdge( BuildingNode*, BuildingNode*, string, BuildingEdge *next = NULL );// constructor
-    BuildingEdge* next () const;                                                    // accessor - returns next building edge
-    void nextIs( BuildingEdge* );                                                   // mutator - update the next building edge
+    BuildingNode* node1 () const;                                                   // accessor - first building node of the building edge
+    BuildingNode* node2 () const;                                                   // accessor - second building node of the building edge
+    string connector () const;                                                      // accessor - connector type of the building edge
+    BuildingEdge* next () const;                                                    // accessor - next building edge of the building edge
+    void nextIs( BuildingEdge* );                                                   // mutator - updates the next building edge
 private:
     BuildingNode *node1_, *node2_;
     string connector_;
@@ -211,8 +214,23 @@ private:
 // constructor -- constructs a new building edge with two building nodes, connector type, and an optional next building edge
 BuildingEdge::BuildingEdge(BuildingNode *node1, BuildingNode *node2, string connector, BuildingEdge *next) : node1_(node1), node2_(node2), connector_(connector), next_(next) { }
 
+// accessor - returns first building node value of object
+BuildingNode* BuildingEdge::node1() const {
+    return node1_;
+}
+
+// accessor - returns second building node value of object
+BuildingNode* BuildingEdge::node2() const {
+    return node2_;
+}
+
+// accessor - returns connector type value o object
+string BuildingEdge::connector() const {
+    return connector_;
+}
+
 // accessor - returns next building edge value of object
-BuildingEdge *BuildingEdge::next() const {
+BuildingEdge* BuildingEdge::next() const {
     return next_;
 }
 
@@ -243,7 +261,8 @@ public:
     bool operator== ( const Graph& ) const;                 // equality operator for graph objects
 
     // TODO: remove only for debugging purposes
-    void printNode() const;
+    void printNodes() const;
+    void printEdges() const;
 private:
     BuildingNode* findBuildingNode ( string ) const;        // accessor - finds building node in graph
 
@@ -315,9 +334,9 @@ Building* Graph::findBuilding(string code) const {
 }
 
 // mutator - adds building edge to the building edges value of object
-//void Graph::addEdge(string code1, string code2, string connector) {
-//    BuildingEdge *newEdge = new BuildingEdge();
-//}
+void Graph::addEdge(string code1, string code2, string connector) {
+    edges_ = new BuildingEdge(findBuildingNode(code1), findBuildingNode(code2), connector, edges_);
+}
 
 // deletes building nodes and edges values of object
 void Graph::deleteGraph() {
@@ -334,11 +353,21 @@ void Graph::deleteGraph() {
 }
 
 // TODO: remove only for debugging purposes
-void Graph::printNode() const {
+void Graph::printNodes() const {
     BuildingNode *curNode = nodes_;
     while(curNode){
         cout << *(curNode->building());
         curNode = curNode->next();
+    }
+    cout << endl;
+}
+
+// TODO: remove only for debugging purposes
+void Graph::printEdges() const {
+    BuildingEdge *curEdge = edges_;
+    while(curEdge){
+        cout << *(curEdge->node1()->building()) << *(curEdge->node2()->building()) << curEdge->connector() << endl;
+        curEdge = curEdge->next();
     }
     cout << endl;
 }
@@ -410,7 +439,7 @@ int main( int argc, char *argv[] ) {
         while ( !source.eof() ) {
             switch (op) {
 
-                // add a new building to the collection of Buildings, and add the building to map1
+                    // add a new building to the collection of Buildings, and add the building to map1
                 case building : {
                     string code;
                     string name;
@@ -422,15 +451,15 @@ int main( int argc, char *argv[] ) {
                     break;
                 }
 
-//                    // add a new link between two existing nodes in map1
-//                case edge: {
-//                    string code1, code2, type;
-//                    source >> code1 >> code2 >> type;
-//                    map1.addEdge( code1, code2, type );
-//                    string junk;
-//                    getline ( source, junk );
-//                    break;
-//                }
+                    // add a new link between two existing nodes in map1
+                case edge: {
+                    string code1, code2, type;
+                    source >> code1 >> code2 >> type;
+                    map1.addEdge( code1, code2, type );
+                    string junk;
+                    getline ( source, junk );
+                    break;
+                }
 
                 default: { }
             }
@@ -455,7 +484,7 @@ int main( int argc, char *argv[] ) {
     while ( !cin.eof() ) {
         switch (op) {
 
-            // set variable map to point to new graph (map1 or map2)
+                // set variable map to point to new graph (map1 or map2)
             case mapPtr: {
                 string mapNo;
                 cin >> mapNo;
@@ -487,7 +516,7 @@ int main( int argc, char *argv[] ) {
                 map->addNode( buildings.findBuilding( code ) );
 
                 // TODO: remove only for debugging purposes
-                map->printNode();
+                map->printNodes();
 
                 string junk;
                 getline( cin, junk );
@@ -510,15 +539,19 @@ int main( int argc, char *argv[] ) {
                 break;
             }
 
-//                // add a new link between existing graph nodes in the current map
-//            case edge: {
-//                string code1, code2, type;
-//                cin >> code1 >> code2 >> type;
-//                map->addEdge( code1, code2, type );
-//                string junk;
-//                getline ( cin, junk );
-//                break;
-//            }
+                // add a new link between existing graph nodes in the current map
+            case edge: {
+                string code1, code2, type;
+                cin >> code1 >> code2 >> type;
+                map->addEdge( code1, code2, type );
+
+                // TODO: remove only for debugging purposes
+                map->printEdges();
+
+                string junk;
+                getline ( cin, junk );
+                break;
+            }
 
 
                 // delete the entire graph (no memory leak).  There is no change to the collection of Buildings.
@@ -526,7 +559,8 @@ int main( int argc, char *argv[] ) {
                 map->deleteGraph();
 
                 // TODO: remove only for debugging purposes
-                map->printNode();
+                map->printNodes();
+                map->printEdges();
 
                 break;
             }
@@ -548,7 +582,7 @@ int main( int argc, char *argv[] ) {
                 map->removeNode( code );
 
                 // TODO: remove only for debugging purposes
-                map->printNode();
+                map->printNodes();
 
                 string junk;
                 getline( cin, junk );
@@ -564,8 +598,8 @@ int main( int argc, char *argv[] ) {
                 buildings.remove ( code );
 
                 // TODO: remove only for debugging purposes
-                map1.printNode();
-                map2.printNode();
+                map1.printNodes();
+                map2.printNodes();
 
                 string junk;
                 getline ( cin, junk );
