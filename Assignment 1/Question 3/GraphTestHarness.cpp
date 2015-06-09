@@ -204,6 +204,7 @@ public:
     string connector () const;                                                      // accessor - connector type of the building edge
     BuildingEdge* next () const;                                                    // accessor - next building edge of the building edge
     void nextIs( BuildingEdge* );                                                   // mutator - updates the next building edge
+    bool connects( string, string ) const;                               // checks if the building edge connects two buildings
 private:
     BuildingNode *node1_, *node2_;
     string connector_;
@@ -239,6 +240,16 @@ void BuildingEdge::nextIs(BuildingEdge *next) {
     next_ = next;
 }
 
+// returns true if building edge connects building nodes with the building code
+bool BuildingEdge::connects(string code1, string code2) const {
+    if(code2.empty()) {
+        return node1_->building()->code() == code1 || node2_->building()->code() == code1;
+    } else {
+        return (node1_->building()->code() == code1 && node2_->building()->code() == code2) ||
+                (node2_->building()->code() == code1 && node1_->building()->code() == code2);
+    }
+}
+
 
 //===================================================================
 // Graph (of Buildings and Connectors)
@@ -265,6 +276,7 @@ public:
     void printEdges() const;
 private:
     BuildingNode* findBuildingNode ( string ) const;        // accessor - finds building node in graph
+    void removeEdges( string, string code2 = "" );          // mutator - removes adjacent building edges of a building node in the graph
 
     BuildingNode* nodes_;
     BuildingEdge* edges_;
@@ -306,7 +318,7 @@ void Graph::removeNode(string code) {
     // If the root building node has the building code then delete the root node
     else if (curNode->building()->code() == code) {
         nodes_ = curNode->next();
-        // TODO: remove adjacent nodes
+        removeEdges(curNode->building()->code());
         delete curNode;
     }
     // Otherwise check other building nodes and delete the building node with the building code
@@ -314,8 +326,8 @@ void Graph::removeNode(string code) {
         while(curNode->next()) {
             if(curNode->next()->building()->code() == code) {
                 BuildingNode *tempNode = curNode->next();
-                curNode->nextIs(curNode->next()->next());
-                // TODO: remove adjacent nodes
+                curNode->nextIs(tempNode->next());
+                removeEdges(tempNode->building()->code());
                 delete tempNode;
                 break;
             }
@@ -337,6 +349,11 @@ Building* Graph::findBuilding(string code) const {
 void Graph::addEdge(string code1, string code2, string connector) {
     edges_ = new BuildingEdge(findBuildingNode(code1), findBuildingNode(code2), connector, edges_);
 }
+
+// mutator - remove building edge from the building edges value of object
+//void Graph::removeEdge(string code1, string code2) {
+//    removeEdges(code1, code2);
+//}
 
 // deletes building nodes and edges values of object
 void Graph::deleteGraph() {
@@ -382,6 +399,32 @@ BuildingNode* Graph::findBuildingNode(string code) const {
         curNode = curNode->next();
     }
     return NULL;
+}
+
+// mutator - removes building edges with the building code from the building edges value of object
+void Graph::removeEdges(string code1, string code2) {
+    BuildingEdge *curEdge = edges_;
+    // If there are no building edges then do nothing
+    if(curEdge == NULL) {
+        return;
+    }
+    // If the root building edge connects the buildings then delete the root node
+    else if (curEdge->connects(code1, code2)) {
+        edges_ = curEdge->next();
+        delete curEdge;
+    }
+    // Otherwise check other building edges and delete the building edge that connects the buildings
+    else {
+        while(curEdge->next()) {
+            if(curEdge->next()->connects(code1, code2)) {
+                BuildingEdge *tempEdge = curEdge->next();
+                curEdge->nextIs(tempEdge->next());
+                delete tempEdge;
+                break;
+            }
+            curEdge = curEdge->next();
+        }
+    }
 }
 
 
@@ -565,15 +608,19 @@ int main( int argc, char *argv[] ) {
                 break;
             }
 
-//                // remove an existing edge from the current map
-//            case remEdge: {
-//                string code1, code2;
-//                cin >> code1 >> code2;
-//                map->removeEdge( code1, code2 );
-//                string junk;
-//                getline ( cin, junk );
-//                break;
-//            }
+                // remove an existing edge from the current map
+            case remEdge: {
+                string code1, code2;
+                cin >> code1 >> code2;
+                map->removeEdge( code1, code2 );
+
+                // TODO: remove only for debugging purposes
+                map->printEdges();
+
+                string junk;
+                getline ( cin, junk );
+                break;
+            }
 
                 // remove an existing node from the current map.  There is no change to the collection of Buildings.
             case remNode: {
