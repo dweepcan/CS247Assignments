@@ -1,0 +1,51 @@
+m 1
+b DC Davis Centre
+b MC Math and Computing
+b M3 Mathematics 3
+w MC
+b C2 Chemistry 2
+w DC
+b DC Davis Centre
+n M3
+n C2
+n DC
+f C2
+e C2 DC bridge
+e M3 C2 tunnel
+r C2 DC
+r C2 M3
+e C2 DC bridge
+e DC M3 hall
+v DC
+n DC
+f DC
+e C2 M3 tunnel
+b MC Math and Computing
+n MC
+f MC
+e MC C2 hall
+e DC MC tunnel
+r C2 MC
+v C2
+f C2
+v M3
+f MC
+n M3
+d
+n C2
+n DC
+n M3
+n MC
+e MC DC bridge
+e DC M3 hall
+e M3 C2 tunnel
+f DC
+w C2
+r M3 DC
+v M3
+b C2 Chemistry 2
+n C2
+e DC C2 bridge
+r C2 DC
+f C2
+f M3
