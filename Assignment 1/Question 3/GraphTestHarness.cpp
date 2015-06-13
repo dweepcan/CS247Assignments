@@ -19,7 +19,7 @@ private:
 
 
 // constructor -- constructs a new building code
-BCode::BCode ( string code ) : code_(code) { }
+BCode::BCode(string code) : code_(code) { }
 
 // accessor - returns code value of object
 string BCode::code() const {
@@ -73,7 +73,7 @@ bool operator>= (const Building &a, const Building &b) {
 
 
 // streaming operator
-ostream& operator<<( ostream &sout, const Building &b ) {
+ostream& operator<< (ostream &sout, const Building &b) {
     sout << b.code() << "\t" << b.name() << endl;
 
     return sout;
@@ -204,7 +204,8 @@ public:
     string connector () const;                                                      // accessor - connector type of the building edge
     BuildingEdge* next () const;                                                    // accessor - next building edge of the building edge
     void nextIs( BuildingEdge* );                                                   // mutator - updates the next building edge
-    bool connects( string, string = "" ) const;                                          // checks if the building edge connects two buildings
+    bool connects( string, string ) const;                                          // checks if the building edge connects two buildings
+    BuildingNode* connectsTo( string ) const;                                       // accessor - building node connected to in the building edge
 private:
     BuildingNode *node1_, *node2_;
     string connector_;
@@ -240,14 +241,20 @@ void BuildingEdge::nextIs(BuildingEdge *next) {
     next_ = next;
 }
 
-// returns true if building edge connects building nodes with the building code
+// returns true if building edge connects two building nodes with the building code
 bool BuildingEdge::connects(string code1, string code2) const {
-    if(code2.empty()) {
-        return node1_->building()->code() == code1 || node2_->building()->code() == code1;
-    } else {
-        return (node1_->building()->code() == code1 && node2_->building()->code() == code2) ||
-                (node2_->building()->code() == code1 && node1_->building()->code() == code2);
+    return (node1_->building()->code() == code1 && node2_->building()->code() == code2) ||
+            (node2_->building()->code() == code1 && node1_->building()->code() == code2);
+}
+
+// accessor - returns the other building node value of object
+BuildingNode* BuildingEdge::connectsTo(string code) const {
+    if(node1_->building()->code() == code) {
+        return node2_;
+    } else if(node2_->building()->code() == code) {
+        return node1_;
     }
+    return NULL;
 }
 
 
@@ -428,7 +435,7 @@ void Graph::removeAdjacentEdges(string code) {
     BuildingEdge *curEdge = edges_;
 
     // Delete all leading building edges that have the building
-    while(curEdge && curEdge->connects(code)) {
+    while(curEdge && curEdge->connectsTo(code)) {
         edges_ = curEdge->next();
         delete curEdge;
         curEdge = edges_;
@@ -436,7 +443,7 @@ void Graph::removeAdjacentEdges(string code) {
 
     // Delete all no leading building edges with the building
     while(curEdge) {
-        if(curEdge->connects(code)) {
+        if(curEdge->connectsTo(code)) {
             prev->nextIs(curEdge->next());
             delete curEdge;
             curEdge = prev->next();
@@ -531,7 +538,7 @@ int main( int argc, char *argv[] ) {
         }
     }
 
-//    cout << map1;
+    cout << map1;
 
     Graph* map = &map1;  // input commands affect which ever graph that map points to (map1 or map2)
 
@@ -555,11 +562,11 @@ int main( int argc, char *argv[] ) {
                 break;
             }
 
-//                // print the current map to the console
-//            case print: {
-//                cout << *map;
-//                break;
-//            }
+                // print the current map to the console
+            case print: {
+                cout << *map;
+                break;
+            }
 
                 // add a new building to the collection of buildings
             case building : {
